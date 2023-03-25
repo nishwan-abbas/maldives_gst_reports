@@ -155,38 +155,22 @@ class AccountMove(models.Model):
             else:
                 move.gst_16_percent = move._compute_gst_rate_total(16)
 
-    @api.depends('amount_untaxed_signed')
-    def _compute_service_charge(self):
-        for move in self:
-            if move.move_type in ('in_invoice', 'out_refund'):
-                move.service_charge = move.amount_untaxed_signed * -0.1
-            else:
-                move.service_charge = move.amount_untaxed_signed * 0.1
+#     @api.depends('amount_untaxed_signed')
+#     def _compute_service_charge(self):
+#         for move in self:
+#             move.service_charge = move.amount_untaxed_signed * 0.1
 
-    @api.depends('amount_untaxed_signed', 'service_charge')
-    def _compute_taxable_amount(self):
-        for move in self:
-            if move.move_type in ('in_invoice', 'out_refund'):
-                move.taxable_amount = sum(
-                    [move.amount_untaxed_signed, move.service_charge]) * -1
-            else:
-                move.taxable_amount = sum(
-                    [move.amount_untaxed_signed, move.service_charge])
+#     @api.depends('amount_untaxed_signed', 'service_charge')
+#     def _compute_taxable_amount(self):
+#         for move in self:
+#             move.taxable_amount = sum([move.amount_untaxed_signed, move.service_charge])
 
-    @api.depends('line_ids.quantity', 'line_ids.price_unit', 'line_ids.tax_ids')
-    def _compute_green_tax(self):
-        # compute the green tax value for the move
-        for move in self:
-            green_tax_total = 0
-            for line in move.line_ids:
-                for tax in line.tax_ids:
-                    if tax.amount_type == 'fixed' and tax.name == 'Green Tax':
-                        green_tax_total += line.quantity * \
-                            line.price_unit * (tax.amount / 100)
-            
-            # Check if the move is "in_refund" or "out_refund" and multiply the value by -1
-            if move.move_type in ('in_invoice', 'out_refund'):
-                green_tax_total *= -1
+#     @api.depends('line_ids.quantity', 'line_ids.product_id')
+#     def _compute_total_quantity(self):
+#         for move in self:
+#             move.total_quantity = sum(line.quantity for line in move.line_ids if line.product_id.name == 'Room Charges')
 
-            # set the green tax value for the move
-            move.green_tax = green_tax_total
+#     @api.depends('total_quantity')
+#     def _compute_green_tax(self):
+#         for move in self:
+#             move.green_tax = move.total_quantity * 3
